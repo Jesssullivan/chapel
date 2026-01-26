@@ -1,0 +1,130 @@
+name: Nix Build
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'flake.nix'
+      - 'flake.lock'
+      - 'compiler/**'
+      - 'runtime/**'
+      - 'modules/**'
+      - 'tools/**'
+      - 'util/**'
+      - 'make/**'
+      - 'Makefile*'
+  pull_request:
+    paths:
+      - 'flake.nix'
+      - 'flake.lock'
+      - 'compiler/**'
+      - 'runtime/**'
+      - 'modules/**'
+      - 'tools/**'
+      - 'util/**'
+      - 'make/**'
+      - 'Makefile*'
+  workflow_dispatch:
+
+jobs:
+  flake-check:
+    name: Nix Flake Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v27
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Check flake
+        run: nix flake check --no-build
+
+      - name: Show flake info
+        run: nix flake show
+
+  build-chapel-gnu:
+    name: Build Chapel (GNU backend)
+    runs-on: ubuntu-latest
+    needs: flake-check
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v27
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Build chapel-gnu
+        run: |
+          nix build .#chapel-gnu --print-build-logs
+          ./result/bin/chpl --version
+
+  build-chapel-bundled-llvm:
+    name: Build Chapel (Bundled LLVM - supports LLVM 21)
+    runs-on: ubuntu-latest
+    needs: flake-check
+    # This is a long build (~4GB memory), only run on main or when explicitly requested
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v27
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Build chapel (bundled LLVM)
+        run: |
+          nix build .#chapel --print-build-logs
+          ./result/bin/chpl --version
+
+  build-chapel-system-llvm:
+    name: Build Chapel (System LLVM 19)
+    runs-on: ubuntu-latest
+    needs: flake-check
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v27
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Build chapel-system-llvm
+        run: |
+          nix build .#chapel-system-llvm --print-build-logs
+          ./result/bin/chpl --version
+
+  dev-shell:
+    name: Test Dev Shell
+    runs-on: ubuntu-latest
+    needs: flake-check
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v27
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Test chapel-dev shell
+        run: |
+          nix develop .#chapel-dev --command bash -c '
+            echo "Testing chapel-dev shell..."
+            echo "CHPL_LLVM=$CHPL_LLVM"
+            echo "CHPL_LLVM_CONFIG=$CHPL_LLVM_CONFIG"
+            which clang
+            llvm-config --version
+          '
