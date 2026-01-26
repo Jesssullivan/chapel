@@ -182,8 +182,14 @@
 
             # Remove broken symlinks before fixup phase runs its checks
             preFixup = ''
-              find $out -type l ! -exec test -e {} \; -delete 2>/dev/null || true
+              # Remove broken symlinks that point to /build directory
+              # These are test files from hwloc and are not needed at runtime
+              find $out -xtype l -delete 2>/dev/null || true
             '';
+
+            # Also disable the broken symlinks check as a fallback
+            # (hwloc build directory contains symlinks that are only valid during build)
+            dontCheckForBrokenSymlinks = true;
 
             meta = with pkgs.lib; {
               description = "A productive parallel programming language";
