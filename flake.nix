@@ -50,6 +50,7 @@
           python312Packages.virtualenv
           python312Packages.setuptools
           makeWrapper
+          autoPatchelfHook
         ];
 
         # LLVM-specific inputs
