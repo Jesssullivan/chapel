@@ -177,15 +177,13 @@
               # Copy Makefiles needed for compilation
               cp Makefile* $out/share/chapel/ 2>/dev/null || true
 
-              # Remove broken symlinks that point to /build directory
-              # These are test files from hwloc that aren't needed at runtime
-              find $out -type l ! -exec test -e {} \; -delete 2>/dev/null || true
-
               runHook postInstall
             '';
 
-            # Don't check for broken symlinks (we clean them up in installPhase)
-            dontFixup = false;
+            # Remove broken symlinks before fixup phase runs its checks
+            preFixup = ''
+              find $out -type l ! -exec test -e {} \; -delete 2>/dev/null || true
+            '';
 
             meta = with pkgs.lib; {
               description = "A productive parallel programming language";
