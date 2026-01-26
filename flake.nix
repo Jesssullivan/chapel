@@ -177,10 +177,14 @@
               # Copy Makefiles needed for compilation
               cp Makefile* $out/share/chapel/ 2>/dev/null || true
 
+              # Remove broken symlinks that point to /build directory
+              # These are test files from hwloc that aren't needed at runtime
+              find $out -type l ! -exec test -e {} \; -delete 2>/dev/null || true
+
               runHook postInstall
             '';
 
-            # Skip fixup for Chapel's complex directory structure
+            # Don't check for broken symlinks (we clean them up in installPhase)
             dontFixup = false;
 
             meta = with pkgs.lib; {
