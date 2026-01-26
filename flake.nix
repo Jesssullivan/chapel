@@ -144,10 +144,9 @@
               runHook preBuild
 
               # Build Chapel compiler
+              # Note: chpldoc and mason require network access (pip install) which
+              # is blocked in the Nix sandbox, so we only build the core compiler
               make -j$NIX_BUILD_CORES
-
-              # Build additional tools
-              make chpldoc mason
 
               runHook postBuild
             '';
