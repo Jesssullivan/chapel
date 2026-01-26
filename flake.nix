@@ -49,6 +49,7 @@
           python312Packages.pip
           python312Packages.virtualenv
           python312Packages.setuptools
+          makeWrapper
         ];
 
         # LLVM-specific inputs
@@ -185,6 +186,16 @@
               # Remove broken symlinks that point to /build directory
               # These are test files from hwloc and are not needed at runtime
               find $out -xtype l -delete 2>/dev/null || true
+            '';
+
+            # Wrap binaries to set CHPL_HOME environment variable
+            postFixup = ''
+              for prog in $out/bin/*; do
+                if [ -f "$prog" ] && [ -x "$prog" ]; then
+                  wrapProgram "$prog" \
+                    --set CHPL_HOME "$out/share/chapel"
+                fi
+              done
             '';
 
             # Also disable the broken symlinks check as a fallback
