@@ -121,6 +121,14 @@
               then "-I${llvmPackages.libclang.dev}/include -I${pkgs.glibc.dev}/include"
               else "";
 
+            # Fix shebangs that use /usr/bin/env (doesn't exist in Nix sandbox)
+            postPatch = ''
+              patchShebangs util/
+              patchShebangs compiler/
+              patchShebangs tools/
+              patchShebangs make/
+            '';
+
             configurePhase = ''
               runHook preConfigure
 
