@@ -280,12 +280,13 @@ jobs:
     name: x86_64-linux (LLVM ${{ matrix.llvm }})
     runs-on: ubuntu-latest
     needs: flake-check
-    if: github.event.inputs.build_all_llvm == 'true' || (github.ref == 'refs/heads/main' && github.event_name == 'push')
+    if: github.event.inputs.build_all_llvm == 'true' || (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/llvm-21-support'))
     strategy:
       fail-fast: false
       matrix:
         # LLVM 14-17 have been removed from nixpkgs as obsolete
-        llvm: [18]
+        # LLVM 19 is tested separately in build-linux-system-llvm
+        llvm: [18, 20, 21]
     steps:
       - uses: actions/checkout@v4
 

@@ -47,9 +47,15 @@ in {
   # System LLVM test (LLVM 19)
   chapel-llvm19 = mkSmokeTest packages.chapel-llvm19;
 
-  # Additional LLVM version tests (LLVM 18 only, 14-17 removed from nixpkgs)
+  # Additional LLVM version tests (14-17 removed from nixpkgs)
 } // lib.optionalAttrs (builtins.hasAttr "chapel-llvm18" packages) {
   chapel-llvm18 = mkSmokeTest packages.chapel-llvm18;
+}
+// lib.optionalAttrs (builtins.hasAttr "chapel-llvm20" packages) {
+  chapel-llvm20 = mkSmokeTest packages.chapel-llvm20;
+}
+// lib.optionalAttrs (builtins.hasAttr "chapel-llvm21" packages) {
+  chapel-llvm21 = mkSmokeTest packages.chapel-llvm21;
 }
 
 # GPU tests are conditional on hardware availability

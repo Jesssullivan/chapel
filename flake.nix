@@ -13,7 +13,7 @@
   };
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-utils.url = "github:numtide/flake-utils";
 
     # Chapel source versions (for building older releases)
@@ -241,7 +241,7 @@
       } // builtins.listToAttrs (map (v: {
         name = "chapel-llvm${toString v}";
         value = self.packages.${prev.system}."chapel-llvm${toString v}";
-      }) [ 18 19 ]);
+      }) [ 18 19 20 21 ]);
 
       # ===================
       # Templates

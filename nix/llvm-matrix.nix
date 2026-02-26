@@ -15,13 +15,13 @@ rec {
     # nixos-24.11 (stable)
     stable = [ 14 15 16 17 18 19 ];
     # nixpkgs-unstable
-    unstable = [ 14 15 16 17 18 19 20 ];
+    unstable = [ 14 15 16 17 18 19 20 21 ];
   };
 
   # All LLVM versions we want to expose as package variants
   # Limited to what's currently available in nixpkgs-unstable
   # LLVM 14-17 have been removed from nixpkgs as obsolete
-  exposedVersions = [ 18 19 ];
+  exposedVersions = [ 18 19 20 21 ];
 
   # Chapel version to LLVM support mapping
   chapelLlvmSupport = {
