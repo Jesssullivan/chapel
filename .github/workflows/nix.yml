@@ -118,7 +118,7 @@ jobs:
   # Runner scope resolved via tinyland-inc/GloriousFlywheel#71
   build-linux-bundled-llvm:
     name: x86_64-linux (Bundled LLVM)
-    runs-on: tinyland-nix
+    runs-on: chapel-nix
     needs: flake-check
     timeout-minutes: 360
     # Long build, only on main/llvm-21-support or workflow_dispatch
