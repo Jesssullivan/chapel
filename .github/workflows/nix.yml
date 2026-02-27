@@ -114,32 +114,43 @@ jobs:
             echo "ATTIC_TOKEN not set, skipping cache push"
           fi
 
-  # Bundled LLVM on self-hosted runner (persistent Nix store, enough disk space)
+  # Bundled LLVM on GloriousFlywheel ARC runner (Civo K8s, Nix + Attic pre-configured)
   build-linux-bundled-llvm:
     name: x86_64-linux (Bundled LLVM)
-    runs-on: [self-hosted, x86_64-linux, nix]
+    runs-on: tinyland-nix
     needs: flake-check
-    # Long build, only on main/llvm-21-support or workflow_dispatch; requires self-hosted runner
+    # Long build, only on main/llvm-21-support or workflow_dispatch; requires ARC runner
     if: github.repository == 'Jesssullivan/chapel' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/llvm-21-support' || github.event_name == 'workflow_dispatch')
     steps:
       - uses: actions/checkout@v4
 
       - name: Build chapel (bundled LLVM)
         run: |
+          # Use watch-store for incremental caching during long LLVM build
+          if command -v attic &>/dev/null && [ -n "$ATTIC_SERVER" ]; then
+            attic login tinyland "$ATTIC_SERVER" "$ATTIC_TOKEN" 2>/dev/null || true
+            attic watch-store "$ATTIC_CACHE" &
+            WATCH_PID=$!
+          fi
           nix build .#chapel --print-build-logs
           ./result/bin/chpl --version
+          # Wait for watch-store to finish pushing
+          if [ -n "${WATCH_PID:-}" ]; then
+            kill $WATCH_PID 2>/dev/null || true
+            wait $WATCH_PID 2>/dev/null || true
+          fi
 
-      - name: Push to Attic cache
+      - name: Push final closure to Attic cache
         if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/llvm-21-support')
         continue-on-error: true
         env:
           ATTIC_TOKEN: ${{ secrets.ATTIC_TOKEN }}
         run: |
-          if [ -n "$ATTIC_TOKEN" ]; then
+          if command -v attic &>/dev/null && [ -n "$ATTIC_TOKEN" ]; then
             attic login tinyland $ATTIC_SERVER $ATTIC_TOKEN
             attic push --closure $ATTIC_CACHE result
           else
-            echo "ATTIC_TOKEN not set, skipping cache push"
+            echo "attic not available or ATTIC_TOKEN not set, skipping cache push"
           fi
 
   build-linux-system-llvm:
