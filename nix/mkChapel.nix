@@ -357,13 +357,15 @@ pkgs.stdenv.mkDerivation rec {
       find $out/lib -type f 2>/dev/null || echo "  (empty)"
     fi
   '' + ''
-    # Wrap binaries to set CHPL_HOME and ensure python3 is on PATH
+    # Wrap binaries to set CHPL_HOME and ensure python3 + compiler are on PATH
     # Chapel's chpl compiler calls util/printchplenv at runtime which requires python3
+    # and probes for the backend compiler (gcc for GNU, clang for LLVM)
     for prog in $out/bin/*; do
       if [ -f "$prog" ] && [ -x "$prog" ]; then
         wrapProgram "$prog" \
           --set CHPL_HOME "$out/share/chapel" \
-          --prefix PATH : "${pkgs.python312}/bin"
+          --prefix PATH : "${pkgs.python312}/bin" \
+          --prefix PATH : "${if llvmBackend == "none" then "${pkgs.gcc}/bin" else if llvmBackend == "system" then "${llvmPackages.clang}/bin" else "${bootstrapLlvm.clang}/bin"}"
       fi
     done
   '';
