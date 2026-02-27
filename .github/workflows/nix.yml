@@ -114,43 +114,31 @@ jobs:
             echo "ATTIC_TOKEN not set, skipping cache push"
           fi
 
-  # Bundled LLVM build (heavy ~2h build, benefits greatly from Attic cache)
-  # TODO: Move to GloriousFlywheel ARC runner (tinyland-nix) once repo is added
-  # to tinyland-inc org runner group. See issue #4.
-  # Currently using ubuntu-latest as fallback since ARC runners are org-scoped
-  # to tinyland-inc and can't reach Jesssullivan/chapel.
+  # Bundled LLVM on GloriousFlywheel ARC runner (Civo K8s, Nix + Attic pre-configured)
+  # Runner scope resolved via tinyland-inc/GloriousFlywheel#71
   build-linux-bundled-llvm:
     name: x86_64-linux (Bundled LLVM)
-    runs-on: ubuntu-latest
+    runs-on: tinyland-nix
     needs: flake-check
     timeout-minutes: 360
     # Long build, only on main/llvm-21-support or workflow_dispatch
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/llvm-21-support' || github.event_name == 'workflow_dispatch'
+    if: github.repository == 'Jesssullivan/chapel' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/llvm-21-support' || github.event_name == 'workflow_dispatch')
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install Nix
-        uses: cachix/install-nix-action@v27
-        with:
-          nix_path: nixpkgs=channel:nixos-unstable
-          extra_nix_config: |
-            experimental-features = nix-command flakes
-            extra-substituters = https://nix-cache.fuzzy-dev.tinyland.dev/main
-            extra-trusted-public-keys = main:PBDvqG8OP3W2XF4QzuqWwZD/RhLRsE7ONxwM09kqTtw=
 
       - name: Build chapel (bundled LLVM)
         env:
           ATTIC_TOKEN: ${{ secrets.ATTIC_TOKEN }}
         run: |
           # Use watch-store for incremental caching during long LLVM build
-          if [ -n "$ATTIC_TOKEN" ]; then
-            nix run nixpkgs#attic -- login tinyland "$ATTIC_SERVER" "$ATTIC_TOKEN" 2>/dev/null || true
-            nix run nixpkgs#attic -- watch-store "$ATTIC_CACHE" &
+          if command -v attic &>/dev/null && [ -n "$ATTIC_TOKEN" ]; then
+            attic login tinyland "$ATTIC_SERVER" "$ATTIC_TOKEN" 2>/dev/null || true
+            attic watch-store "$ATTIC_CACHE" &
             WATCH_PID=$!
           fi
           nix build .#chapel --print-build-logs
           ./result/bin/chpl --version
-          # Wait for watch-store to finish pushing
+          # Stop watch-store background process
           if [ -n "${WATCH_PID:-}" ]; then
             kill $WATCH_PID 2>/dev/null || true
             wait $WATCH_PID 2>/dev/null || true
@@ -162,11 +150,11 @@ jobs:
         env:
           ATTIC_TOKEN: ${{ secrets.ATTIC_TOKEN }}
         run: |
-          if [ -n "$ATTIC_TOKEN" ]; then
-            nix run nixpkgs#attic -- login tinyland $ATTIC_SERVER $ATTIC_TOKEN
-            nix run nixpkgs#attic -- push --closure $ATTIC_CACHE result
+          if command -v attic &>/dev/null && [ -n "$ATTIC_TOKEN" ]; then
+            attic login tinyland $ATTIC_SERVER $ATTIC_TOKEN
+            attic push --closure $ATTIC_CACHE result
           else
-            echo "ATTIC_TOKEN not set, skipping cache push"
+            echo "attic not available or ATTIC_TOKEN not set, skipping cache push"
           fi
 
   build-linux-system-llvm:
