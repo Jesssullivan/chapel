@@ -48,83 +48,57 @@ jobs:
 
   build-chapel-gnu:
     name: Build Chapel (GNU backend)
-    runs-on: ubuntu-latest
+    runs-on: chapel-nix
     needs: flake-check
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Nix
-        uses: cachix/install-nix-action@v27
+      - uses: tinyland-inc/GloriousFlywheel/.github/actions/nix-job@main
         with:
-          nix_path: nixpkgs=channel:nixos-unstable
-          extra_nix_config: |
-            experimental-features = nix-command flakes
-
-      - name: Build chapel-gnu
-        run: |
-          nix build .#chapel-gnu --print-build-logs
-          ./result/bin/chpl --version
+          command: |
+            nix build .#chapel-gnu --print-build-logs
+            ./result/bin/chpl --version
 
   build-chapel-bundled-llvm:
     name: Build Chapel (Bundled LLVM - supports LLVM 21)
-    runs-on: ubuntu-latest
+    runs-on: chapel-nix
     needs: flake-check
     # This is a long build (~4GB memory), only run on main or when explicitly requested
     if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Nix
-        uses: cachix/install-nix-action@v27
+      - uses: tinyland-inc/GloriousFlywheel/.github/actions/nix-job@main
         with:
-          nix_path: nixpkgs=channel:nixos-unstable
-          extra_nix_config: |
-            experimental-features = nix-command flakes
-
-      - name: Build chapel (bundled LLVM)
-        run: |
-          nix build .#chapel --print-build-logs
-          ./result/bin/chpl --version
+          command: |
+            nix build .#chapel --print-build-logs
+            ./result/bin/chpl --version
 
   build-chapel-system-llvm:
     name: Build Chapel (System LLVM 19)
-    runs-on: ubuntu-latest
+    runs-on: chapel-nix
     needs: flake-check
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Nix
-        uses: cachix/install-nix-action@v27
+      - uses: tinyland-inc/GloriousFlywheel/.github/actions/nix-job@main
         with:
-          nix_path: nixpkgs=channel:nixos-unstable
-          extra_nix_config: |
-            experimental-features = nix-command flakes
-
-      - name: Build chapel-system-llvm
-        run: |
-          nix build .#chapel-system-llvm --print-build-logs
-          ./result/bin/chpl --version
+          command: |
+            nix build .#chapel-system-llvm --print-build-logs
+            ./result/bin/chpl --version
 
   dev-shell:
     name: Test Dev Shell
-    runs-on: ubuntu-latest
+    runs-on: chapel-nix
     needs: flake-check
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Nix
-        uses: cachix/install-nix-action@v27
+      - uses: tinyland-inc/GloriousFlywheel/.github/actions/nix-job@main
         with:
-          nix_path: nixpkgs=channel:nixos-unstable
-          extra_nix_config: |
-            experimental-features = nix-command flakes
-
-      - name: Test chapel-dev shell
-        run: |
-          nix develop .#chapel-dev --command bash -c '
+          command: |
             echo "Testing chapel-dev shell..."
             echo "CHPL_LLVM=$CHPL_LLVM"
             echo "CHPL_LLVM_CONFIG=$CHPL_LLVM_CONFIG"
             which clang
             llvm-config --version
-          '
