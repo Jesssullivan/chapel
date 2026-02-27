@@ -69,6 +69,7 @@ let
     python312Packages.virtualenv
     python312Packages.setuptools
     makeWrapper
+    removeReferencesTo  # Strip build-time store refs from binaries
   ] ++ lib.optionals stdenv.isLinux [
     autoPatchelfHook  # Linux-only: ELF binary patching (macOS uses Mach-O)
   ];
@@ -158,6 +159,27 @@ let
       then "${bootstrapLlvm.clang}/bin/clang++"
       else "${pkgs.gcc}/bin/g++";
 
+  # Build-time store paths to strip from binaries (Linux only).
+  # Chapel embeds compiler/header paths that bloat the runtime closure.
+  # Inspired by twesterhout/nix-chapel's chapelFixupBinary.
+  # See: https://github.com/chapel-lang/chapel/issues/22333
+  removeStoreRefCommands =
+    if llvmBackend == "system" then ''
+        remove-references-to -t ${llvmPackages.clang} "$f" 2>/dev/null || true
+        remove-references-to -t ${llvmPackages.llvm.dev} "$f" 2>/dev/null || true
+        remove-references-to -t ${llvmPackages.libclang.dev} "$f" 2>/dev/null || true
+        remove-references-to -t ${pkgs.glibc.dev} "$f" 2>/dev/null || true
+    ''
+    else if llvmBackend == "bundled" then ''
+        remove-references-to -t ${bootstrapLlvm.clang} "$f" 2>/dev/null || true
+        remove-references-to -t ${bootstrapLlvm.llvm.dev} "$f" 2>/dev/null || true
+        remove-references-to -t ${pkgs.glibc.dev} "$f" 2>/dev/null || true
+    ''
+    else ''
+        remove-references-to -t ${pkgs.gcc} "$f" 2>/dev/null || true
+        remove-references-to -t ${pkgs.glibc.dev} "$f" 2>/dev/null || true
+    '';
+
 in
 
 assert isLlvmSupported || throw
@@ -211,6 +233,13 @@ pkgs.stdenv.mkDerivation rec {
     else
       "-I${llvmPackages.libclang.dev}/include"
   );
+
+  # Suppress Python venv creation in the Nix sandbox.
+  # pip install is blocked by the sandbox, and we provide python3 via Nix.
+  # See: https://github.com/chapel-lang/chapel/issues/22497
+  CHPL_DONT_BUILD_CHPLDOC_VENV = "1";
+  CHPL_DONT_BUILD_TEST_VENV = "1";
+  CHPL_DONT_BUILD_C2CHAPEL_VENV = "1";
 
   # Fix shebangs that use /usr/bin/env (doesn't exist in Nix sandbox)
   postPatch = ''
@@ -300,6 +329,17 @@ pkgs.stdenv.mkDerivation rec {
           echo "Fixing RPATH for $f: removing /build/ references"
           patchelf --set-rpath "$new_rpath" "$f" 2>/dev/null || true
         fi
+      fi
+    done
+
+    # Strip build-time-only Nix store references from binaries.
+    # These are not needed at runtime (wrapProgram handles PATH) and bloat the
+    # closure. See removeStoreRefCommands definition above.
+    echo "Stripping build-time store references from binaries..."
+    for f in $out/bin/*; do
+      if [ -f "$f" ] && [ -x "$f" ]; then
+        echo "  Cleaning store refs in: $(basename $f)"
+        ${removeStoreRefCommands}
       fi
     done
   '';
