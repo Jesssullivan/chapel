@@ -114,8 +114,8 @@ jobs:
             echo "ATTIC_TOKEN not set, skipping cache push"
           fi
 
-  # Bundled LLVM on GloriousFlywheel ARC runner (Civo K8s, Nix + Attic pre-configured)
-  # Runner scope resolved via tinyland-inc/GloriousFlywheel#71
+  # Bundled LLVM on GloriousFlywheel ARC runner (Civo K8s)
+  # Uses DeterminateSystems installer (no xz dependency, unlike cachix/install-nix-action)
   build-linux-bundled-llvm:
     name: x86_64-linux (Bundled LLVM)
     runs-on: chapel-nix
@@ -126,14 +126,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+        with:
+          extra-conf: |
+            experimental-features = nix-command flakes
+            extra-substituters = https://nix-cache.fuzzy-dev.tinyland.dev/main
+            extra-trusted-public-keys = main:PBDvqG8OP3W2XF4QzuqWwZD/RhLRsE7ONxwM09kqTtw=
+
       - name: Build chapel (bundled LLVM)
         env:
           ATTIC_TOKEN: ${{ secrets.ATTIC_TOKEN }}
         run: |
-          # Use watch-store for incremental caching during long LLVM build
-          if command -v attic &>/dev/null && [ -n "$ATTIC_TOKEN" ]; then
-            attic login tinyland "$ATTIC_SERVER" "$ATTIC_TOKEN" 2>/dev/null || true
-            attic watch-store "$ATTIC_CACHE" &
+          # Install and start attic watch-store for incremental caching during long LLVM build
+          if [ -n "$ATTIC_TOKEN" ]; then
+            nix run nixpkgs#attic -- login tinyland "$ATTIC_SERVER" "$ATTIC_TOKEN" 2>/dev/null || true
+            nix run nixpkgs#attic -- watch-store "$ATTIC_CACHE" &
             WATCH_PID=$!
           fi
           nix build .#chapel --print-build-logs
@@ -150,11 +158,11 @@ jobs:
         env:
           ATTIC_TOKEN: ${{ secrets.ATTIC_TOKEN }}
         run: |
-          if command -v attic &>/dev/null && [ -n "$ATTIC_TOKEN" ]; then
-            attic login tinyland $ATTIC_SERVER $ATTIC_TOKEN
-            attic push --closure $ATTIC_CACHE result
+          if [ -n "$ATTIC_TOKEN" ]; then
+            nix run nixpkgs#attic -- login tinyland $ATTIC_SERVER $ATTIC_TOKEN
+            nix run nixpkgs#attic -- push --closure $ATTIC_CACHE result
           else
-            echo "attic not available or ATTIC_TOKEN not set, skipping cache push"
+            echo "ATTIC_TOKEN not set, skipping cache push"
           fi
 
   build-linux-system-llvm:
