@@ -57,10 +57,10 @@ proc main() {
   // CHECK-NEXT: myFieldB = 0
   // CHECK-NEXT: myFieldC = (x0 = 0, x1 = 0)
   // CHECK-NEXT: myFieldD = ""
-  // CHECK-LOCAL: myFieldE = NULL
+  // CHECK-LOCAL: myFieldE = nullptr
   // CHECK-NOLOCAL: myFieldE = {
   // CHECK-NOLOCAL-NEXT: locale = (node = 0)
-  // CHECK-NOLOCAL-NEXT: addr = NULL
+  // CHECK-NOLOCAL-NEXT: addr = nullptr
   // CHECK-NOLOCAL-NEXT: }
   // CHECK-NEXT: myFieldF = [1..10] int(64)
   // CHECK-NEXT: [1] = 0
@@ -80,14 +80,14 @@ proc main() {
   // CHECK-NEXT: (string) ""
 
   // CHECK: p myRec2.myFieldE
-  // CHECK-LOCAL-NEXT: (basicTypes::MyClass *) NULL
+  // CHECK-LOCAL-NEXT: (basicTypes::MyClass *) nullptr
   // CHECK-NOLOCAL-NEXT: (wide(MyClass)) {
   // CHECK-NOLOCAL-NEXT: locale = (node = 0)
-  // CHECK-NOLOCAL-NEXT: addr = NULL
+  // CHECK-NOLOCAL-NEXT: addr = nullptr
   // CHECK-NOLOCAL-NEXT: }
 
   // CHECK: p myRec2.myFieldF
-  // CHECK-NEXT: (ChapelArray::[domain(1,int(64),one)] int(64)) [1..10] int(64)
+  // CHECK-NEXT: ([domain(1,int(64),one)] int(64)) [1..10] int(64)
   // CHECK-NEXT: [1] = 0
   // CHECK-NEXT: [2] = 0
   // CHECK-NEXT: [3] = 0
@@ -119,7 +119,7 @@ proc main() {
   const myStr = "Hello, world!";
 
   // CHECK: p myDom
-  // CHECK-NEXT: (ChapelDomain::domain(2,int(64),positive)) {1..10 by 1, 1..10 by 2} {
+  // CHECK-NEXT: (domain(2,int(64),positive)) {1..10 by 1, 1..10 by 2} {
   // CHECK-NEXT: dim = {
   // CHECK-NEXT: [0] = 1..10 by 1 {
   // CHECK-NEXT: low = 1
@@ -136,7 +136,7 @@ proc main() {
   const myDom = {1..10, 1..10 by 2};
 
   // CHECK: p myArr2d
-  // CHECK-NEXT: (ChapelArray::[domain(2,int(64),positive)] int(64)) [1..10 by 1, 1..10 by 2] int(64) {
+  // CHECK-NEXT: ([domain(2,int(64),positive)] int(64)) [1..10 by 1, 1..10 by 2] int(64) {
   // CHECK-NEXT: [1,1] = 1
   // CHECK-NEXT: [2,1] = 6
   // CHECK-NEXT: [3,1] = 11
@@ -191,7 +191,7 @@ proc main() {
   const myArr2d: [myDom] int = reshape([i in 1..#myDom.size] i, myDom);
 
   // CHECK: p myArr
-  // CHECK-NEXT: (ChapelArray::[domain(1,int(64),one)] int(64)) [1..10] int(64) {
+  // CHECK-NEXT: ([domain(1,int(64),one)] int(64)) [1..10] int(64) {
   // CHECK-NEXT: [1] = 1
   // CHECK-NEXT: [2] = 2
   // CHECK-NEXT: [3] = 3

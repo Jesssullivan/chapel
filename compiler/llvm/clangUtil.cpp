@@ -3029,6 +3029,17 @@ static void helpComputeClangArgs(std::string& clangCC,
   }
 #endif
 
+#if HAVE_LLVM_VER >= 210
+  if (usingGpuLocaleModel() &&
+      getGpuCodegenType() == GpuCodegenType::GPU_CG_AMD_HIP) {
+    // this is need to make hipcub wrappers work since
+    // TempStorage is marked deprecated, but I can't seem to find an alternative
+    // the rocm docs do not mention the deprecation and I can't find proper docs
+    // for the new API that the warning refers to
+    clangCCArgs.push_back("-Wno-deprecated-declarations");
+  }
+#endif
+
   // Add debug flags
   if (fDebugSymbols) {
     clangCCArgs.push_back("-g");
@@ -3152,7 +3163,7 @@ void runClang(const char* just_parse_filename) {
   // tell clang to use CUDA/AMD support
   if (isFullGpuCodegen()) {
     // Need to pass this flag so atomics header will compile
-    clangOtherArgs.push_back("--std=c++14");
+    clangOtherArgs.push_back("--std=c++17");
 
     // Need to select CUDA/AMD mode in embedded clang to
     // activate the GPU target
@@ -4966,7 +4977,7 @@ static void makeBinaryLLVMForHIP(const std::string& artifactFilename,
   // So this loop should run exactly one iteration.
   INT_ASSERT(gpuArches.size() == 1);
 
-  std::string targets = "-targets=host-x86_64-unknown-linux";
+  std::string targets = "-targets=host-x86_64-unknown-linux-unknown";
 #if HAVE_LLVM_VER >= 150
   std::string inputs = "-input=/dev/null ";
   std::string outputs = "-output=" + fatbinFilename;
@@ -5152,14 +5163,25 @@ void makeBinaryLLVM(void) {
     if (useLinkCXX != clangCXX)
       clangLDArgs.clear();
 
-    // Add runtime libs arguments
-    //readArgsFromFile(runtime_libs, clangLDArgs);
+    //
+    // Add link args. Order is runtime > program && bundled > system.
+    //
 
-    // add the bundled link args from printchplenv
-    splitStringWhitespace(CHPL_TARGET_BUNDLED_LINK_ARGS, clangLDArgs);
+    if (fBuiltinRuntime) {
+      splitStringWhitespace(CHPL_TARGET_USE_RUNTIME_LINK_ARGS,
+                            clangLDArgs);
+      splitStringWhitespace(CHPL_TARGET_BUNDLED_RUNTIME_LINK_ARGS,
+                            clangLDArgs);
+    }
 
-    // add the system link args from printchplenv
-    splitStringWhitespace(CHPL_TARGET_SYSTEM_LINK_ARGS, clangLDArgs);
+    splitStringWhitespace(CHPL_TARGET_BUNDLED_PROGRAM_LINK_ARGS, clangLDArgs);
+
+    if (fBuiltinRuntime) {
+      splitStringWhitespace(CHPL_TARGET_SYSTEM_RUNTIME_LINK_ARGS,
+                            clangLDArgs);
+    }
+
+    splitStringWhitespace(CHPL_TARGET_SYSTEM_PROGRAM_LINK_ARGS, clangLDArgs);
 
     // Grab extra dependencies for multilocale libraries if needed.
     if (fClientServerLibrary) {

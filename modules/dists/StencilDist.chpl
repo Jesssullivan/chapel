@@ -436,10 +436,6 @@ operator =(ref a: stencilDist(?), b: stencilDist(?)) {
 }
 
 
-@deprecated("'Stencil' is deprecated, please use 'stencilDist' instead")
-type Stencil = stencilDist;
-
-
 class StencilImpl : BaseDist, writeSerializable {
   param rank: int;
   type idxType = int;
@@ -1344,7 +1340,7 @@ proc StencilDom.setup() {
 
       myLocDom.myBlock = dist.getChunk(whole, localeIdx);
 
-      if !isZeroTuple(fluff) && myLocDom.myBlock.sizeAs(int) != 0 then {
+      if !isZeroTuple(fluff) && myLocDom.myBlock.sizeAs(int) != 0 {
         myLocDom.myFluff = myLocDom.myBlock.expand(fluff*abstr);
       } else {
         myLocDom.myFluff = myLocDom.myBlock;

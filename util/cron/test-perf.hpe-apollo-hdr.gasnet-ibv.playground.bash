@@ -33,10 +33,13 @@ if [[ "$SKIP_ML_PLAYGROUND" == "1" ]]; then
   exit
 fi
 
-GITHUB_USER=jabraham17
-GITHUB_BRANCH=better-licm
-SHORT_NAME=better-licm
-START_DATE=11/19/25
+# Test what happens to performance if we disable the
+# --interprocedural-alias-analysis pass by default
+
+GITHUB_USER=bradcray
+GITHUB_BRANCH=no-noAliasSets2
+SHORT_NAME=noAliasAnalysis
+START_DATE=2/19/26
 
 set -e
 checkout_branch $GITHUB_USER $GITHUB_BRANCH

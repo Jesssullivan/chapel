@@ -42,18 +42,15 @@ proc masonSystem(args: [] string) {
       pkgConfigExists();
       var pcArgs = pcCmd.values();
       printPkgPc(pcArgs);
-    }
-    else if searchCmd.hasValue() {
+    } else if searchCmd.hasValue() {
       pkgConfigExists();
       var searchArgs = searchCmd.values();
       pkgSearch(searchArgs);
-    }
-    else { // no valid sub-command given
+    } else { // no valid sub-command given
       masonSystemHelp();
       exit(0);
     }
-  }
-  catch e: MasonError { // likely pkg-config wasn't found on system
+  } catch e: MasonError { // likely pkg-config wasn't found on system
     stderr.writeln(e.message());
     exit(1);
   }
@@ -72,7 +69,8 @@ proc pkgConfigExists() throws {
 /* Searches available system packages */
 proc pkgSearch(args) throws {
 
-  var parser = new argumentParser(helpHandler=new MasonSystemSearchHelpHandler());
+  var parser =
+    new argumentParser(helpHandler=new MasonSystemSearchHelpHandler());
 
   var quietFlag = parser.addFlag(name="no-show-desc", defaultValue=false);
   var descFlag = parser.addFlag(name="desc", defaultValue=false);
@@ -86,8 +84,7 @@ proc pkgSearch(args) throws {
 
   if pkgNameArg.hasValue() {
     pkgName = pkgNameArg.value();
-  }
-  else {
+  } else {
     listAllPkgs();
     exit(0);
   }
@@ -105,16 +102,13 @@ proc pkgSearch(args) throws {
       if pattern.search(line) {
         if quiet {
           writeln(toSearch[1]);
-        }
-        else write(line);
+        } else write(line);
       }
-    }
-    else {
+    } else {
       if pattern.search(toSearch[1]) {
         if quiet {
           writeln(toSearch[1]);
-        }
-        else write(line);
+        } else write(line);
       }
     }
   }
@@ -147,7 +141,9 @@ proc printPkgPc(args) throws {
       // Add a these call, since `string.join` has an iterator overload but
       // not one for list.
       //
-      var pcDir = "".join(getPkgVariable(pkgName, "--variable=pcfiledir").these()).strip();
+      var pcDir = "".join(
+        getPkgVariable(pkgName, "--variable=pcfiledir").these()
+      ).strip();
       var pcFile = joinPath(pcDir, pkgName + ".pc");
       var pc = openReader(pcFile, locking=false);
       writeln("\n------- " + pkgName + ".pc -------\n");
@@ -155,16 +151,14 @@ proc printPkgPc(args) throws {
         write(line);
       }
       writeln("\n-------------------\n");
+    } else {
+      throw new MasonError("Mason could not find " +
+                           pkgName + " on your system");
     }
-    else {
-      throw new owned MasonError("Mason could not find " + pkgName + " on your system");
-    }
-  }
-  catch e: FileNotFoundError {
+  } catch e: FileNotFoundError {
     stderr.writeln("Package exists but Mason could not find it's .pc file");
     exit(1);
-  }
-  catch e: MasonError {
+  } catch e: MasonError {
     stderr.writeln(e.message());
     exit(1);
   }
@@ -212,9 +206,13 @@ proc getPkgInfo(pkgName: string, version: string) throws {
 
   if pkgExists(pkgName) {
     // Pass "these" to join instead of converting the list to an array.
-    const pcVersion = "".join(getPkgVariable(pkgName, "--modversion").these()).strip();
+    const pcVersion = "".join(
+      getPkgVariable(pkgName, "--modversion").these()
+    ).strip();
     const libs = "".join(getPkgVariable(pkgName, "--libs").these()).strip();
-    const includePath = "".join(getPkgVariable(pkgName, "--variable=includedir").these()).strip();
+    const includePath = "".join(
+      getPkgVariable(pkgName, "--variable=includedir").these()
+    ).strip();
 
     pkgInfo.set("name", pkgName);
     pkgInfo.set("version", pcVersion);
@@ -222,11 +220,11 @@ proc getPkgInfo(pkgName: string, version: string) throws {
     pkgInfo.set("include", includePath);
 
     if pcVersion != version && version != "*" {
-      throw new owned MasonError("Unable to locate " + pkgName + ": " +version + "\n Found " + pcVersion);
+      throw new MasonError("Unable to locate " + pkgName +
+                           ": " +version + "\n Found " + pcVersion);
     }
-  }
-  else {
-    throw new owned MasonError("No pkg-config package by the name of: " + pkgName);
+  } else {
+    throw new MasonError("No pkg-config package by the name of: " + pkgName);
   }
   return pkgInfo;
 }
@@ -245,8 +243,7 @@ proc getPCDeps(exDeps: Toml) {
         exDom += name;
         exDepTree[name] = pkgInfo;
       }
-    }
-    catch e: MasonError {
+    } catch e: MasonError {
       stderr.writeln(e.message());
       exit(1);
     }

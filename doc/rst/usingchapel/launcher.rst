@@ -293,6 +293,33 @@ Common Slurm Settings
 
     export CHPL_LAUNCHER_WALLTIME=00:10:00
 
+* If you need to pass more arguments to slurm, you can use the slurm environment
+  variable for the option. Alternatibvey, you can pass extra arguments through
+  the ``--system-launcher-flags`` flag. For example, to pass ``--account=acct`` to
+  slurm, you can use:
+
+  .. code-block:: bash
+
+     ./myprogram --system-launcher-flags="--account=acct"
+
+  Multiple arguments can be passed by passing them as a single single string, or
+  by specifying ``--system-launcher-flags`` multiple times. For example:
+
+  .. code-block:: bash
+
+     ./myprogram --system-launcher-flags="--account=acct --partition=debug"
+
+     # or equivalently
+
+     ./myprogram --system-launcher-flags="--account=acct" --system-launcher-flags="--partition=debug"
+
+  .. note::
+
+     If you plan to use submit a batch script via ``CHPL_LAUNCHER_USE_SBATCH``
+     or ``--generate-sbatch-script``, you should prefer passing only a single
+     argument per ``--system-launcher-flags`` flag, as multiple flags passed as
+     a single string will not be parsed correctly in the generated batch script.
+
 .. _ssh-launchers-with-slurm:
 
 Using any SSH-based launcher with Slurm
@@ -352,13 +379,14 @@ specified in `job.bash`.
 Troubleshooting with Slurm
 **************************
 
+.. _mem-not-avail:
+
 I'm seeing srun errors like `Memory required by task is not available`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-When using the ``slurm-srun`` launcher, you may see errors like this
-(especially on HPE Cray EX systems):
+When using the ``slurm-srun`` launcher, you may see errors like this:
 
-.. code-block::
+.. code-block:: bash
 
    srun: error: Unable to allocate resources: Memory required by task is not available
 
@@ -368,6 +396,10 @@ If you are seeing this error, try setting the following environment variable:
 
   export CHPL_LAUNCHER_MEM=unset
 
+Note that changing this environment variable, as with any
+``CHPL_LAUNCHER_*`` variable, does not require rebuilding Chapel or
+recompiling your program.
+  
 Changing the _real binary suffix
 ++++++++++++++++++++++++++++++++
 

@@ -42,6 +42,7 @@ struct Nilable {
 PyTypeObject* parentTypeFor(chpl::uast::asttags::AstTag tag);
 PyTypeObject* parentTypeFor(chpl::types::typetags::TypeTag tag);
 PyTypeObject* parentTypeFor(chpl::types::paramtags::ParamTag tag);
+PyTypeObject* parentTypeFor(chpl::ErrorType tag);
 
 using LineColumnPair = std::tuple<int, int>;
 
@@ -66,6 +67,9 @@ struct LocationObject : public PythonClass<LocationObject, chpl::Location> {
                     std::min(self->value_.start(), otherCast->value_.start()),
                     std::max(self->value_.end(), otherCast->value_.end()));
     return (PyObject*) LocationObject::create(newLoc);
+  }
+  static PyObject* iadd(LocationObject* self, PyObject* other) {
+    return add(self, other);
   }
 
   static PyObject* subtract(LocationObject* self, PyObject* other) {
@@ -103,6 +107,9 @@ struct LocationObject : public PythonClass<LocationObject, chpl::Location> {
       return (PyObject*) LocationObject::create(newLoc);
     }
   }
+  static PyObject* isub(LocationObject* self, PyObject* other) {
+    return subtract(self, other);
+  }
 
   static PyObject* str(LocationObject* self) {
     return PyUnicode_FromFormat("%s:%d:%d-%d:%d",
@@ -116,10 +123,12 @@ struct LocationObject : public PythonClass<LocationObject, chpl::Location> {
   static PyTypeObject* configurePythonType() {
     // Configure the necessary methods to make inserting into sets working:
 
-    std::array<PyType_Slot, 3> extraSlots = {
+    std::array<PyType_Slot, 5> extraSlots = {
       PyType_Slot{Py_tp_str, (void*) str},
       {Py_nb_add, (void*) add},
+      {Py_nb_inplace_add, (void*) iadd},
       {Py_nb_subtract, (void*) subtract},
+      {Py_nb_inplace_subtract, (void*) isub},
     };
     PyTypeObject* configuring = PythonClassWithContext<LocationObject, chpl::Location>::configurePythonType(Py_TPFLAGS_DEFAULT, extraSlots);
     return configuring;
@@ -241,6 +250,18 @@ struct TypedSignatureObject : public PythonClassWithContext<TypedSignatureObject
   }
 };
 
+struct ApplicabilityResultObject : public PythonClassWithContext<ApplicabilityResultObject, chpl::resolution::ApplicabilityResult> {
+  static constexpr const char* QualifiedName = "chapel.ApplicabilityResult";
+  static constexpr const char* Name = "ApplicabilityResult";
+  static constexpr const char* DocStr = "The result of checking whether a particular function candidate is applicable to a call.";
+};
+
+struct CallInfoObject : public PythonClassWithContext<CallInfoObject, chpl::resolution::CallInfo> {
+  static constexpr const char* QualifiedName = "chapel.CallInfo";
+  static constexpr const char* Name = "CallInfo";
+  static constexpr const char* DocStr = "Information about a particular call, including the actuals usded for the resolution";
+};
+
 template<typename IntentType>
 const char* intentToString(IntentType intent) {
   return qualifierToString(chpl::uast::Qualifier(int(intent)));
@@ -268,5 +289,14 @@ PyObject* wrapGeneratedType(ContextObject* context, const chpl::types::Type* nod
   Creates a Python object of the class corresponding to the given Param*.
  */
 PyObject* wrapGeneratedType(ContextObject* context, const chpl::types::Param* node);
+
+/**
+  Creates a Python object of the class corresponding to the given ErrorBase*.
+
+  Note: unlike all other generated objects at the type of writing, Errors
+  aren't owned by the context (and borrowed by Python). Instead, they are
+  owned by the Python object that contains them. So, here, we clone them.
+ */
+PyObject* wrapGeneratedType(ContextObject* context, const chpl::ErrorBase* node);
 
 #endif

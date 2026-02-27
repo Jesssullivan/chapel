@@ -105,7 +105,14 @@ lint-standard-modules: chplcheck FORCE
 		--disable-rule ControlFlowParentheses \
 		--disable-rule UnusedFormal \
 		--disable-rule LineLength \
+		--disable-rule UnattachedElse \
+		--disable-rule UnattachedCatch \
+		--disable-rule UnattachedCurly \
 		$(MODULES_TO_LINT)
+
+MASON_MODULES_TO_LINT = $(shell find $(CHPL_MAKE_HOME)/tools/mason -name '*.chpl')
+lint-mason: chplcheck FORCE
+	tools/chplcheck/chplcheck $(MASON_MODULES_TO_LINT)
 
 run-frontend-linters: FORCE
 	@cd compiler && $(MAKE) run-frontend-linters

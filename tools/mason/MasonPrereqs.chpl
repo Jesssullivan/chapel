@@ -45,16 +45,18 @@ private inline proc pushd(path: string) {
   return new pushdMgr(path);
 }
 
-proc install(path: string) {
+proc install(baseDir: string, path: string) {
   log.infof("Installing prerequisite %s\n", path);
   manage pushd(path) {
-    MasonUtils.runCommand("make"); // TODO check for errors
+    // TODO check for errors
+    MasonUtils.runCommand(["make", "MASON_PACKAGE_HOME=" + baseDir]);
   }
 }
 
 proc install() {
-  for prereq in prereqs() {
-    install(prereq);
+  const baseDir = here.cwd();
+  for prereq in prereqs(baseDir=baseDir) {
+    install(baseDir, prereq);
   }
   log.infoln("Prerequisites have been installed");
 }
@@ -62,8 +64,9 @@ proc install() {
 iter chplFlags(const baseDir = here.cwd()) {
   var flags: list(string);
 
+  const cmd = ["make", "MASON_PACKAGE_HOME=" + baseDir,
+                "--quiet", makeTargetChplFlags];
   for prereq in prereqs(baseDir) {
-    const cmd = "make --quiet %s".format(makeTargetChplFlags);
     var makeOutput: string;
     manage pushd(prereq) do makeOutput = MasonUtils.runCommand(cmd).strip();
 
@@ -94,19 +97,16 @@ iter prereqs(const baseDir = here.cwd()) {
       for dir in dirs[1..] {
         if dirHasMakefile(dir) {
           yield dir;
-        }
-        else {
+        } else {
           log.warnf("%s is in prereqs directory. But doesn't have a Makefile." +
                     " Ignoring.", dir);
         }
       }
-    }
-    else {
+    } else {
       log.infof("%s is supposed to be directory with prerequisites " +
                 "but it looks to be a file. It will be ignored.", prereqsDir);
     }
-  }
-  else {
+  } else {
     log.debugf("%s doesn't exist.\n", prereqsDir);
   }
 }

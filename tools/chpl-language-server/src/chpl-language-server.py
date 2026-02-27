@@ -335,12 +335,13 @@ class ChapelLanguageServer(LanguageServer):
         diagnostics = []
         for e in errors:
             diag = error_to_diagnostic(e)
-            diag.related_information = [
-                DiagnosticRelatedInformation(
-                    location_to_location(note_loc), note_msg
-                )
-                for (note_loc, note_msg) in e.notes()
-            ]
+            if diag.related_information is None:
+                diag.related_information = [
+                    DiagnosticRelatedInformation(
+                        location_to_location(note_loc), note_msg
+                    )
+                    for (note_loc, note_msg) in e.notes()
+                ]
             diagnostics.append(diag)
 
         # get lint diagnostics if applicable
@@ -422,14 +423,22 @@ class ChapelLanguageServer(LanguageServer):
         if not self.param_inlays:
             return []
 
-        _, _, param = qt
+        _, ty, param = qt
         if not param:
             return []
+
+        val = str(param)
+        val = val.replace("\n", "\\n").replace("\t", "\\t").replace("\r", "\\r")
+        if isinstance(ty, chapel.CompositeType):
+            if ty_decl := ty.decl():
+                assert isinstance(ty_decl, chapel.NamedDecl)
+                if ty_decl.name() == "_bytes":
+                    val = "b" + val
 
         return [
             InlayHint(
                 position=decl.rng.end,
-                label="param value is " + str(param),
+                label="param value is " + val,
                 padding_left=True,
             )
         ]

@@ -327,8 +327,8 @@ module IncorrectIndentation {
   // semicolon warning does not issue bad indentation
   enum color { red, green, blue };
 
-  // Since locations are incorrectly reported with 'public' and 'private',
-  // these shouldn't warn.
+
+
   module M7 {
     proc f1 {}
       proc g1 {}
@@ -419,5 +419,58 @@ if 1 < 2 {
   {
   var a = 10;
   var b = 20;
+  }
+
+  proc ifElse() {
+    if 1 < 5 {
+      writeln("whee");
+    } else if 2 > 3 {
+      writeln("whoopie");
+    } else if 11 > 3 {
+      writeln("wooooow");
+    }
+
+    if 1 < 5 then
+      writeln("whee");
+    else if 2 > 3 then
+      writeln("whoopie");
+    else if 11 > 3 then
+      writeln("wooooow");
+
+    if 1 < 5 {
+      writeln("whee");
+    } else if 11 > 3 {
+        var x = 10;
+          var y = 20;
+    }
+
+    if 1 < 5 {
+      writeln("whee");
+    } else if 11 > 3 {
+      var x = 10;
+      var y = 20;
+        if 1 {
+        writeln("nested");
+      }
+    }
+  }
+
+  var arr: [1..10] int;
+  begin with (ref arr)
+  {
+    writeln("hi");
+    writeln("??");
+  }
+
+  record R { }
+  manage new R()
+  {
+    var x = 1;
+    var y = 2;
+  }
+  manage new R()
+  {
+     var x = 1;
+    var y = 2;
   }
 }
