@@ -1,5 +1,39 @@
 {
   "nodes": {
+    "chapel-2-6": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1757951707,
+        "narHash": "sha256-JRYCtJ0YAXGj1Bb+cS3ZgANazhzX4g853TMREmFNDJE=",
+        "owner": "chapel-lang",
+        "repo": "chapel",
+        "rev": "bea1035c44e1cec860c96e878d4e6a1d99bbf150",
+        "type": "github"
+      },
+      "original": {
+        "owner": "chapel-lang",
+        "ref": "2.6.0",
+        "repo": "chapel",
+        "type": "github"
+      }
+    },
+    "chapel-main": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1769723892,
+        "narHash": "sha256-7RW2EqSYLRbzpsJctAxco3GoA0tQZkaE2MW0pwQgf20=",
+        "owner": "chapel-lang",
+        "repo": "chapel",
+        "rev": "7d01f938987d90c94c4d2c46fa6feeda993b6572",
+        "type": "github"
+      },
+      "original": {
+        "owner": "chapel-lang",
+        "ref": "main",
+        "repo": "chapel",
+        "type": "github"
+      }
+    },
     "flake-utils": {
       "inputs": {
         "systems": "systems"
@@ -20,22 +54,24 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1769170682,
-        "narHash": "sha256-oMmN1lVQU0F0W2k6OI3bgdzp2YOHWYUAw79qzDSjenU=",
+        "lastModified": 1771923393,
+        "narHash": "sha256-Fy0+UXELv9hOE8WjYhJt8fMDLYTU2Dqn3cX4BwoGBos=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "c5296fdd05cfa2c187990dd909864da9658df755",
+        "rev": "ea7f1f06811ce7fcc81d6c6fd4213150c23edcf2",
         "type": "github"
       },
       "original": {
         "owner": "NixOS",
-        "ref": "nixos-unstable",
+        "ref": "nixpkgs-unstable",
         "repo": "nixpkgs",
         "type": "github"
       }
     },
     "root": {
       "inputs": {
+        "chapel-2-6": "chapel-2-6",
+        "chapel-main": "chapel-main",
         "flake-utils": "flake-utils",
         "nixpkgs": "nixpkgs"
       }
